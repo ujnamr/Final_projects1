@@ -1,0 +1,131 @@
+---
+title: "R Final Project"
+format: html
+editor: visual
+---
+
+# Covid Testing
+
+This is an analysis of a cross-sectional study of the de-identified data on COVID-19 testing, and provides a snapshot of the first 100 days of testing during the year 2020 at the Children’s Hospital of Pennsylvania (aka CHOP).
+
+## Initialising the libraries
+
+This involves loading the installed packages to use the built-in functions in them
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+library(tidyverse)
+library(gtsummary)
+library(here)
+library(dplyr)
+here::here ("Final project", "covid_testing.rda")
+
+```
+
+## Descriptive statistics table
+
+```{r}
+#| echo: false
+#| label: table-one
+#| tbl-cap: "Descriptive statistics"
+#| output-location: slide
+#| error: false
+
+load(file = 'covid_testing.rda')
+
+Description_table <- tbl_summary(
+	covid_testing,
+	by = gender,
+	include = c(age, pan_day, result, payor_group, demo_group, patient_class),
+    label = list(
+		pan_day ~ "Pandemic day",
+		payor_group ~ "Payor",
+		demo_group ~ "Demographic",
+		patient_class ~ "Patient class",
+		age ~ "Age",
+		result ~ "Result"
+	),
+	missing_text = "Missing")
+
+Description_table
+
+
+```
+@table-one contains a descriptive statistics table.
+
+```{r}
+#| echo: false
+c2 <- covid_testing %>% mutate(Demographic = factor(demo_group, labels = c("client","patient", "other adult", "misc adult", "unidentified")),
+			  Result = factor(result, labels = c("positive", "negative", "invalid")))
+```
+
+## Univariate regression analysis
+
+```{r}
+#| echo: false
+#| label: table-two
+#| tbl-cap: "Regression Analysis"
+#| output-location: slide
+
+Regression_table <- tbl_uvregression(
+       c2,
+	y = age,
+	include = c(Demographic, gender, result),
+	method = lm)
+
+Regression_table
+
+```
+
+@table-two contains a regression table 
+
+## Histogram for pandemic day
+
+```{r}
+#| echo: false
+#| label: Figure
+#| fig-cap: "Histogram of covid testing day from pandemic"
+#| fig-cap-location: top
+
+hist(covid_testing$pan_day)
+
+```
+@Figure contains a histogram 
+
+## Functions
+
+```{r}
+#| echo: false
+#| output-location: slide
+
+#mean
+
+mn <- function(x){
+	m <- mean(x)
+	return (m)
+}
+mn(c2$pan_day)
+
+# Standard deviation after handling missing values
+
+std_dev <- function(x){
+		clean_data <- x[!is.na(x)]
+		sd_value <- sd(clean_data)
+		return (sd_value)}
+
+std_dev(c2$pan_day)
+
+```
+
+```{r}
+#|echo: false
+
+gtsummary::inline_text(Description_table, variable = "patient_class", level = "admit after surgery-ip", column = "female")
+```
+A greater proportion of female (`r inline_text(Description_table, variable = "result", level="positive", column = "female")`) than male(`r inline_text(Description_table, variable = "result", level="positive", column = "male")`) participants were affected by COVID-19.
+
+```{r}
+
+```
